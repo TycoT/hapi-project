@@ -1,5 +1,6 @@
 import Hapi from 'hapi';
 import Knex from './knex';
+import routes from './routes';
 
 const server = new Hapi.Server();
 
@@ -16,49 +17,21 @@ server.register( require( 'hapi-auth-jwt' ), ( err ) => {
     verifyOptions: {
       algorithms: [ 'HS256' ],
     }
-  } );
-} );
+  });
 
-server.route({
-
-  method: 'GET',
-  path: '/hello',
-  handler: ( request, reply ) => {
-    reply( 'Hello World!' );
-  }
-
+  server.route({
+    method: 'GET',
+    path: '/hello',
+    handler: ( request, reply ) => {
+      reply( 'Hello World!' );
+    }
+  });
 });
 
-server.route( {
-
-  path: '/birds',
-  method: 'GET',
-  handler: ( request, reply ) => {
-    // In general, the Knex operation is like Knex('TABLE_NAME').where(...).chainable(...).then(...)
-    const getOperation = Knex( 'birds' ).where( {
-
-      isPublic: true
-
-    } ).select( 'name', 'species', 'picture_url' ).then( ( results ) => {
-
-      if( !results || results.length === 0 ) {
-        reply( {
-          error: true,
-          errMessage: 'no public bird found',
-        } );
-      }
-
-      reply( {
-        dataCount: results.length,
-        data: results,
-      } );
-
-    } ).catch( ( err ) => {
-      reply( 'server-side error' );
-    } );
-  }
-
-} );
+routes.forEach( ( route ) => {
+  console.log( `attaching ${route.method} ${ route.path }` );
+  server.route( route );
+});
 
 
 server.start(err => {
